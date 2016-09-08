@@ -6,7 +6,9 @@ public class InputMessage {
     private String FromUserName;  
     private Long CreateTime;  
     private String MsgType = "text";  
-    private Long MsgId;  
+    private Long MsgId;
+
+    private Long MsgID;
     // 文本消息  
     private String Content;  
     // 图片消息  
@@ -27,9 +29,19 @@ public class InputMessage {
     // 事件  
     private String Event;  
     private String EventKey;  
-    private String Ticket;  
-  
-    public String getToUserName() {  
+    private String Ticket;
+    //菜单
+    private Long MenuId;
+
+    public Long getMenuId() {
+        return MenuId;
+    }
+
+    public void setMenuId(Long menuId) {
+        MenuId = menuId;
+    }
+
+    public String getToUserName() {
         return ToUserName;  
     }  
   
@@ -187,5 +199,13 @@ public class InputMessage {
   
     public void setTicket(String ticket) {  
         Ticket = ticket;  
-    }  
-}  
+    }
+
+    public Long getMsgID() {
+        return MsgID;
+    }
+
+    public void setMsgID(Long msgID) {
+        MsgID = msgID;
+    }
+}

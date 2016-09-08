@@ -1,7 +1,9 @@
 package cc.yxs.controller;
 
+import cc.yxs.WechatApplication;
 import cc.yxs.entity.InputMessage;
 import cc.yxs.service.AccessTokenService;
+import cc.yxs.service.MessageService;
 import cc.yxs.util.AppConfig;
 import cc.yxs.util.MsgType;
 import cc.yxs.util.OutputMessage;
@@ -38,30 +40,25 @@ import java.util.List;
 
 public class WechatController {
 
-    @Autowired
-    private AccessTokenService tokenService;
+    @Autowired private AccessTokenService tokenService;
 
-    @Value("${app.gen}")
-    private String appGen;
+    @Value("${app.gen}") private String appGen;
 
-    @RequestMapping(value = "/token",method = RequestMethod.GET)
-    public Object getToken(String gen) throws Exception{
-        if(gen.equals(appGen)){
+    @RequestMapping(value = "/token", method = RequestMethod.GET) public Object getToken(String gen) throws Exception {
+        if (gen.equals(appGen)) {
             return tokenService.getAccessToken();
         }
         return null;
     }
 
-    @RequestMapping(value = "/wechat",method = RequestMethod.GET)
-    public Object get(String signature,String timestamp,String nonce,String echostr) throws Exception{
+    @RequestMapping(value = "/wechat", method = RequestMethod.GET) public Object get(String signature, String timestamp, String nonce, String echostr) throws Exception {
         List<String> params = new ArrayList<>();
         params.add(tokenService.getAppToken());
         params.add(timestamp);
         params.add(nonce);
         //1. 将token、timestamp、nonce三个参数进行字典序排序
         Collections.sort(params, new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
+            @Override public int compare(String o1, String o2) {
                 return o1.compareTo(o2);
             }
         });
@@ -73,10 +70,9 @@ public class WechatController {
         return null;
     }
 
-    @RequestMapping(value = "/wechat",method = RequestMethod.POST)
-    public Object post(HttpServletRequest request) throws Exception{
+    @RequestMapping(value = "/wechat", method = RequestMethod.POST) public Object post(HttpServletRequest request) throws Exception {
         ServletInputStream in = request.getInputStream();
-        String requestString=IOUtils.toString(in,"utf8");
+        String requestString = IOUtils.toString(in, "utf8");
         System.out.println(requestString);
         //将POST流转换为XStream对象
         XStream xs = new XStream(new DomDriver());
@@ -86,7 +82,7 @@ public class WechatController {
         InputMessage inputMsg = (InputMessage) xs.fromXML(requestString);
         // 取得消息类型
         String msgType = inputMsg.getMsgType();
-        String messageContent="";
+
 
         System.out.println("开发者微信号：" + inputMsg.getToUserName());
         System.out.println("发送方帐号：" + inputMsg.getFromUserName());
@@ -94,43 +90,43 @@ public class WechatController {
         System.out.println("消息内容：" + inputMsg.getContent());
         System.out.println("消息类型：" + msgType);
         System.out.println("消息Id：" + inputMsg.getMsgId());
-        //根据消息类型获取对应的消息内容
-        if (msgType.equals(MsgType.Text.toString())) {
-            //文本消息
-            messageContent=inputMsg.getContent();
 
+        MessageService messageService = null;
+        try{
+            messageService=WechatApplication.getContext().getBean(msgType.toLowerCase() + "MessageServiceImpl", MessageService.class);
+        }catch (Exception e){
         }
-        if(msgType.equals(MsgType.Voice.toString())){
-            messageContent=inputMsg.getRecognition();
-        }
-        XStream xstream = new XStream(new XppDriver() {
-            @Override
-            public HierarchicalStreamWriter createWriter(Writer out) {
-                return new PrettyPrintWriter(out) {
-                    @Override
-                    protected void writeText(QuickWriter writer,
-                        String text) {
-                        if (!text.startsWith("<![CDATA[")) {
-                            text = "<![CDATA[" + text + "]]>";
-                        }
-                        writer.write(text);
+        if (messageService != null) {
+            String response = messageService.execute(inputMsg);
+            if (response != null) {
+                XStream xstream = new XStream(new XppDriver() {
+                    @Override public HierarchicalStreamWriter createWriter(Writer out) {
+                        return new PrettyPrintWriter(out) {
+                            @Override protected void writeText(QuickWriter writer, String text) {
+                                if (!text.startsWith("<![CDATA[")) {
+                                    text = "<![CDATA[" + text + "]]>";
+                                }
+                                writer.write(text);
+                            }
+                        };
                     }
-                };
+                });
+                //创建文本发送消息对象
+                TextOutputMessage outputMsg = new TextOutputMessage();
+                outputMsg.setContent(response);
+                setOutputMsgInfo(outputMsg, inputMsg);
+                //设置对象转换的XML根节点为xml
+                xstream.alias("xml", outputMsg.getClass());
+                //将对象转换为XML字符串
+                String xml = xstream.toXML(outputMsg);
+                return xml;
             }
-        });
 
-        //创建文本发送消息对象
-        TextOutputMessage outputMsg = new TextOutputMessage();
-        outputMsg.setContent("你的消息("+messageContent+")已经收到，谢谢！");
-        setOutputMsgInfo(outputMsg, inputMsg);
-        //设置对象转换的XML根节点为xml
-        xstream.alias("xml", outputMsg.getClass());
-        //将对象转换为XML字符串
-        String xml = xstream.toXML(outputMsg);
-        return xml;
+        }
+        return "";
     }
-    private static void setOutputMsgInfo(OutputMessage oms,
-        InputMessage msg) throws Exception {
+
+    private static void setOutputMsgInfo(OutputMessage oms, InputMessage msg) throws Exception {
         // 设置发送信息
         Class<?> outMsg = oms.getClass().getSuperclass();
         Field CreateTime = outMsg.getDeclaredField("CreateTime");

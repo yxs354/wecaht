@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>待办列表</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../../dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="dashboard.css" rel="stylesheet">
+
+
+</head>
+
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-1 main">
+            <div class="table-responsive">
+                <table class="table table-striped" id="table1">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th>创建时间</th>
+                        <th>内容</th>
+                        <!--<th>提醒时间</th>-->
+                    </tr>
+                    </thead>
+                    <tbody id="tbody1">
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="http://cdn.bootcss.com/jquery/1.11.3/jquery.min.js"></script>
+<script src="../../dist/js/bootstrap.min.js"></script>
+<script src="../../dist/js/notify.js"></script>
+<script>
+    var baseUrl = "http://localhost:8884";
+        baseUrl="http://114.55.253.30";
+    function checkBoxOnclick(checkbox) {
+        var id = checkbox.id.replace("cid_", "");
+        var checked = checkbox.checked;
+        var message = "";
+        var notifyStatus = "success";
+        var paramStatus=0;
+        if (checked) {
+            message = "已办";
+            paramStatus = 1;
+        } else {
+            message = "待办";
+            notifyStatus="error";
+        }
+        $.get(baseUrl + "/reminder/" + id + "/" + paramStatus, function (data, status) {
+            if ("success" != status) {
+                message = "设置失败";
+                notifyStatus="error";
+            }
+            $("#" + checkbox.id).notify(message, {position: "right", className: notifyStatus, autoHideDelay: 2000});
+        });
+
+    }
+    (function ($) {
+        $.getUrlParam = function (name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+            var r = window.location.search.substr(1).match(reg);
+            if (r != null) return unescape(r[2]);
+            return null;
+        }
+    })(jQuery);
+    var code = $.getUrlParam('code');
+    //alert("code:"+$.getUrlParam('code'));
+    $(document).ready(function () {
+        $.get(baseUrl + "/reminder/list?code=" + code, function (data, status) {
+            var bodyHtml = '';
+            if(data.length>0){
+                for (var i = 0; i < data.length; i++) {
+                    bodyHtml += "<tr id=\"trid_" + data[i].id + "\">";
+                    bodyHtml += "<td><input id=\"cid_" + data[i].id + "\" type=\"checkbox\" name=\"checkbox\" onclick='checkBoxOnclick(this)'></td>";
+                    bodyHtml += "<td>" + format(data[i].date) + "</td>";
+                    bodyHtml += "<td>" + data[i].content + "</td>";
+//                if (data[i].reminderdate == null) {
+//                    bodyHtml += "<td>设置</td>";
+//                } else {
+//                    bodyHtml += "<td>" + format(data[i].reminderdate) + "</td>";
+//                }
+                    bodyHtml += "</tr>";
+                }
+                $("#tbody1").html(bodyHtml);
+            }else{
+                $.notify("暂无待办事项",{position:"top center",className:"success",autoHideDelay:5000});
+            }
+        });
+    });
+    function format(shijianchuo) {
+        var time = new Date(shijianchuo);
+        var y = time.getFullYear();
+        var m = time.getMonth() + 1;
+        var d = time.getDate();
+        var h = time.getHours();
+        var mm = time.getMinutes();
+        var s = time.getSeconds();
+        return y + '-' + add0(m) + '-' + add0(d) + ' ' + add0(h) + ':' + add0(mm) + ':' + add0(s);
+    }
+    function add0(m) {
+        return m < 10 ? '0' + m : m
+    }
+</script>
+
+
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" preserveAspectRatio="none"
+     style="display: none; visibility: hidden; position: absolute; top: -100%; left: -100%;">
+    <defs>
+        <style type="text/css"></style>
+    </defs>
+    <text x="0" y="10" style="font-weight:bold;font-size:10pt;font-family:Arial, Helvetica, Open Sans, sans-serif">200x200</text>
+</svg>
+</body>
+</html>

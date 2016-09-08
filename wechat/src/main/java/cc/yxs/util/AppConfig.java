@@ -19,6 +19,12 @@ public class AppConfig {
     @Value("${wechat.app.appToken}")
     private String appToken;
 
+    @Value("${wechat.app.reminderurl}")
+    private String reminderListPageUrl;
+
+    @Value("${wechat.app.template.reminder.id}")
+    private String reminderTemplateId;
+
     public String getAppId() {
         return appId;
     }
@@ -41,5 +47,21 @@ public class AppConfig {
 
     public void setAppToken(String appToken) {
         this.appToken = appToken;
+    }
+
+    public String getReminderListPageUrl() {
+        return reminderListPageUrl;
+    }
+
+    public void setReminderListPageUrl(String reminderListPageUrl) {
+        this.reminderListPageUrl = reminderListPageUrl;
+    }
+
+    public String getReminderTemplateId() {
+        return reminderTemplateId;
+    }
+
+    public void setReminderTemplateId(String reminderTemplateId) {
+        this.reminderTemplateId = reminderTemplateId;
     }
 }

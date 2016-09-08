@@ -13,6 +13,8 @@ public class WechatReminder {
 
     private Date date;
 
+    private Date reminderdate;
+
     public String getOpenId() {
         return openId;
     }
@@ -52,4 +54,14 @@ public class WechatReminder {
     public void setDate(Date date) {
         this.date = date;
     }
+
+    public Date getReminderdate() {
+        return reminderdate;
+    }
+
+    public void setReminderdate(Date reminderdate) {
+        this.reminderdate = reminderdate;
+    }
+
+
 }
